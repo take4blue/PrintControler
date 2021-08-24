@@ -1,0 +1,103 @@
+﻿<UserControl x:Class="PrintControler.MFilamentLoad.Views.FilamentLoad"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:properties="clr-namespace:PrintControler.MFilamentLoad.Properties"
+             xmlns:common="clr-namespace:Take4.Common;assembly=Common"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="375"
+             prism:ViewModelLocator.AutoWireViewModel="True" >
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Common;component/common.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Label Content="{x:Static properties:Resources.LbTemp}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <Label Content="{Binding CurrentTempNozel}" Width="40" HorizontalContentAlignment="Right" Margin="5,0" VerticalAlignment="Center"/>
+            <Label Content="{x:Static properties:Resources.LbTempHigh}"/>
+            <TextBox MaxLength="4" Style="{StaticResource AutoWidthTextBox}" Margin="5,0" VerticalAlignment="Center">
+                <TextBox.Text>
+                    <Binding Path="TargetHighTempNozel" UpdateSourceTrigger="LostFocus" />
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="{x:Static properties:Resources.LbTempLow}"/>
+            <TextBox MaxLength="4" Style="{StaticResource AutoWidthTextBox}" Margin="5,0" VerticalAlignment="Center">
+                <TextBox.Text>
+                    <Binding Path="TargetLowTempNozel" UpdateSourceTrigger="LostFocus" />
+                </TextBox.Text>
+            </TextBox>
+        </StackPanel>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="{x:Static properties:Resources.LbSpeed}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.RowSpan="4"/>
+            <Label Content="{x:Static properties:Resources.LbSpeedLow}" Grid.Column="1"/>
+            <Label Content="{x:Static properties:Resources.LbSpeedHigh}" Grid.Column="1" Grid.Row="1"/>
+            <Label Content="{x:Static properties:Resources.LbSpeedXY}" Grid.Column="3" Grid.Row="0" Margin="5,0,0,0"/>
+            <Label Content="{x:Static properties:Resources.LbSpeedZ}" Grid.Column="3" Grid.Row="1" Margin="5,0,0,0"/>
+            <common:SpeedText Speed="{Binding SpeedELow, Mode=TwoWay}" Grid.Column="2"/>
+            <common:SpeedText Speed="{Binding SpeedEHigh, Mode=TwoWay}" Grid.Column="2" Grid.Row="1"/>
+            <common:SpeedText Speed="{Binding SpeedXY, Mode=TwoWay}" Grid.Column="4" Grid.Row="0"/>
+            <common:SpeedText Speed="{Binding SpeedZ, Mode=TwoWay}" Grid.Column="4" Grid.Row="1"/>
+        </Grid>
+
+        <StackPanel Margin="0,5" Orientation="Horizontal">
+            <Label Content="{x:Static properties:Resources.LbFilament}" Margin="0,0,9,0"/>
+            <Button Content="{x:Static properties:Resources.PbInsert}"
+                    Command="{Binding ExecuteCommand}"
+                    CommandParameter="InsertFilament"
+                    Margin="5,0"/>
+            <Button Content="{x:Static properties:Resources.PbExtraction}"
+                    Command="{Binding ExecuteCommand}"
+                    CommandParameter="ExtractionFilament"
+                    Margin="5,0"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Button Content="{x:Static properties:Resources.PbCleanUp}"
+                    Command="{Binding ExecuteCommand}"
+                    CommandParameter="CleanNozzle"
+                    Margin="5,0" VerticalAlignment="Center"/>
+            <StackPanel HorizontalAlignment="Left" Margin="10,0,0,0">
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CleanupPreProcess, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.Rb1Step}"/>
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=NozzleHighTemp, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.RbTempHigh}"/>
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=NozzleLowTemp, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.RbTempLow}"/>
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=FilamentCutPreProcess, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.Rb2Step}"/>
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TubeInsertPreProcess, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.Rb3Step}"/>
+                <RadioButton GroupName="NozelClean"
+                             IsChecked="{Binding Path=CleanType ,Mode=TwoWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=FilamentInsert, UpdateSourceTrigger=PropertyChanged}"
+                             Content="{x:Static properties:Resources.Rb4Step}"/>
+            </StackPanel>
+        </StackPanel>
+        <Button Content="{x:Static properties:Resources.PbStop}"
+                Command="{Binding ExecuteCommand}"
+                CommandParameter="EmergencyStop"
+               
+                Margin="5" VerticalAlignment="Center"/>
+        <Label Content="{Binding NowCommandStatus}"/>
+    </StackPanel>
+</UserControl>

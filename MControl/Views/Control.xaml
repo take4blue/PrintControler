@@ -1,0 +1,132 @@
+﻿<UserControl x:Class="PrintControler.MControl.Views.Control"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:properties="clr-namespace:PrintControler.MControl.Properties"
+             xmlns:common="clr-namespace:Take4.Common;assembly=Common"
+             mc:Ignorable="d"
+             prism:ViewModelLocator.AutoWireViewModel="True" >
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Common;component/common.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="{x:Static properties:Resources.LbTemp}" VerticalAlignment="Center" Grid.RowSpan="2"/>
+            <Label Content="{x:Static properties:Resources.LbNozel}" VerticalAlignment="Center" Grid.Column="1"/>
+            <Label Content="{Binding CurrentTempNozel}" Grid.Column="2" Width="40" HorizontalContentAlignment="Right" Margin="5,0" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="3" MaxLength="4" Style="{StaticResource AutoWidthTextBox}" Margin="5,0" VerticalAlignment="Center">
+                <TextBox.Text>
+                    <Binding Path="TargetTempNozel" UpdateSourceTrigger="LostFocus" />
+                </TextBox.Text>
+            </TextBox>
+            <CheckBox IsChecked="{Binding DoHeatNozel}"  Command="{Binding HeatNozel}"
+                      Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <Label Content="{x:Static properties:Resources.LbBed}" Grid.Row="1" VerticalAlignment="Center" Grid.Column="1"/>
+            <Label Content="{Binding CurrentTempBed}" Grid.Column="2" Width="40" HorizontalContentAlignment="Right" Margin="5,0" Grid.Row="1" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="3" MaxLength="4" Style="{StaticResource AutoWidthTextBox}" Margin="5,0" Grid.Row="1" VerticalAlignment="Center">
+                <TextBox.Text>
+                    <Binding Path="TargetTempBed" UpdateSourceTrigger="LostFocus" />
+                </TextBox.Text>
+            </TextBox>
+            <CheckBox IsChecked="{Binding DoHeatBed}" Command="{Binding HeatBed}"
+                      Grid.Column="4" VerticalAlignment="Center" Grid.Row="1" HorizontalAlignment="Center"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="{x:Static properties:Resources.LbXYSpeed}"/>
+                <common:SpeedText Speed="{Binding SpeedXY, Mode=TwoWay}" Grid.Column="1"/>
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                <Label Content="{x:Static properties:Resources.LbZSpeed}"/>
+                <common:SpeedText Speed="{Binding SpeedZ, Mode=TwoWay}"/>
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal">
+                <Label Content="{x:Static properties:Resources.LbESpeed}"/>
+                <common:SpeedText Speed="{Binding SpeedE, Mode=TwoWay}"/>
+            </StackPanel>
+        </Grid>
+        <Label Grid.Row="2" Content="{Binding CurrentPosition}"/>
+        <DockPanel Grid.Row="3">
+            <DataGrid ItemsSource="{Binding MoveData}"
+                      AutoGenerateColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      SelectedItem="{Binding SelectedItem}"
+                      SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn 
+                        Header="{x:Static properties:Resources.LbX}" 
+                        Binding="{Binding MoveX, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn 
+                        MinWidth="80"
+                        Header="{x:Static properties:Resources.LbPosX}"
+                        Binding="{Binding PosX, StringFormat={}{0,8:F3}}" />
+                    <DataGridCheckBoxColumn
+                        Header="{x:Static properties:Resources.LbY}"
+                        Binding="{Binding MoveY, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn
+                        MinWidth="80"
+                        Header="{x:Static properties:Resources.LbPosY}"
+                        Binding="{Binding PosY, StringFormat={}{0,8:F3}}"/>
+                    <DataGridCheckBoxColumn
+                        Header="{x:Static properties:Resources.LbZ}"
+                        Binding="{Binding MoveZ, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn
+                        MinWidth="80"
+                        Header="{x:Static properties:Resources.LbPosZ}"
+                        Binding="{Binding PosZ, StringFormat={}{0,8:F3}}"/>
+                    <DataGridCheckBoxColumn
+                        Header="{x:Static properties:Resources.LbE}"
+                        Binding="{Binding MoveE, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn
+                        MinWidth="80"
+                        Header="{x:Static properties:Resources.LbPosE}"
+                        Binding="{Binding PosE, StringFormat={}{0,8:F3}}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button Content="{x:Static properties:Resources.LbEmStop}"
+                        Command="{Binding EmrgencyStop}"
+                        Margin="5"/>
+                <Button Content="{x:Static properties:Resources.LbMove}"
+                        Command="{Binding MoveCommand}"
+                        Margin="5"/>
+                <Button Content="{x:Static properties:Resources.LbAddRow}"
+                        Command="{Binding AddRowCommand}"
+                        Margin="5,10,5,5"/>
+                <Button Content="{x:Static properties:Resources.LbDelRow}"
+                        Command="{Binding DeleteRowCommand}"
+                        Margin="5"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</UserControl>

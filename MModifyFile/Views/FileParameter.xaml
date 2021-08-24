@@ -1,0 +1,120 @@
+﻿<UserControl x:Class="PrintControler.MModifyFile.Views.FileParameter"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:properties="clr-namespace:PrintControler.MModifyFile.Properties"
+             xmlns:common="clr-namespace:Take4.Common;assembly=Common"
+             mc:Ignorable="d"
+             prism:ViewModelLocator.AutoWireViewModel="True" >
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Common;component/common.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="#FFE5E5E5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Label Content="{x:Static properties:Resources.PlayRemoval}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="playRemovalSize" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="5,0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="6">
+            <TextBox.Text>
+                <Binding Path="PlayRemovalLength" StringFormat="{}{0:F2}" UpdateSourceTrigger="PropertyChanged" />
+            </TextBox.Text>
+        </TextBox>
+        <Label Content="{x:Static properties:Resources.BrimCorrection}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <ComboBox x:Name="SelectBrimSpeed" HorizontalAlignment="Left" VerticalAlignment="Center" Width="90" Margin="5,0" SelectedIndex="{Binding BrimSpeedTypeValue}">
+                <ComboBoxItem Content="{x:Static properties:Resources.SelectBrimSpeedNoChange}" HorizontalAlignment="Left"/>
+                <ComboBoxItem Content="{x:Static properties:Resources.SelectBrimSpeedAbsolute}" HorizontalAlignment="Left"/>
+                <ComboBoxItem Content="{x:Static properties:Resources.SelectBrimSpeedRatio}" HorizontalAlignment="Left"/>
+            </ComboBox>
+            <Label Content="{x:Static properties:Resources.SelectBrimSpeedAbsolute}" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top"/>
+            <common:SpeedText Speed="{Binding BrimSpeed, Mode=TwoWay}"/>
+            <Label Content="{x:Static properties:Resources.SelectBrimSpeedRatio}" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="BrimSpeedRatio" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3" HorizontalContentAlignment="Right" VerticalContentAlignment="Center">
+                <TextBox.Text>
+                    <Binding Path="BrimSpeedRatio" UpdateSourceTrigger="PropertyChanged" />
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="%" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <Label Content="{x:Static properties:Resources.BrimExtrudeRatio}" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="BrimExtrudeRat" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3">
+                <TextBox.Text>
+                    <Binding Path="BrimExtrudeRatio" UpdateSourceTrigger="PropertyChanged"/>
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="%" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+        </StackPanel>
+        <Label Content="{x:Static properties:Resources.Offset}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Grid.Row="2"/>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+            <Label Content="Z" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="OffsetZ" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="6">
+                <TextBox.Text>
+                    <Binding Path="OffsetZ" StringFormat="{}{0:F2}" UpdateSourceTrigger="LostFocus"/>
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="mm" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+        </StackPanel>
+        <Label Content="{x:Static properties:Resources.BrimCorrection}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Grid.Row="3"/>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+            <Label Content="X" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="MotorX" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3">
+                <TextBox.Text>
+                    <Binding Path="MotorX" UpdateSourceTrigger="PropertyChanged"/>
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="Y" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="MotorY" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0" 
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3">
+                <TextBox.Text>
+                    <Binding Path="MotorY" UpdateSourceTrigger="PropertyChanged"/>
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="Z" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="MotorZ" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3">
+                <TextBox.Text>
+                    <Binding Path="MotorZ" UpdateSourceTrigger="PropertyChanged"/>
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="A" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="MotorA" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="3">
+                <TextBox.Text>
+                    <Binding Path="MotorA" UpdateSourceTrigger="PropertyChanged"/>
+                </TextBox.Text>
+            </TextBox>
+        </StackPanel>
+        <Label Content="{x:Static properties:Resources.EnclosureFan}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Grid.Row="4"/>
+        <CheckBox x:Name="EnclosureFanOn" Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0" IsChecked="{Binding EnclosureFanOn}" />
+        <Label Grid.Row="5"
+               Content="{Binding DropAreaLabel}"
+               BorderThickness="3"
+               BorderBrush="#FF686868"
+               Background="White"
+               HorizontalContentAlignment="Center"
+               AllowDrop="True" Drop="dropEvent" DragOver="dragEvent" Grid.ColumnSpan="2">
+        </Label>
+    </Grid>
+</UserControl>

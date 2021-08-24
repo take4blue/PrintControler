@@ -1,0 +1,87 @@
+﻿<Window x:Class="PrintControler.Views.Shell"
+        x:Name="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:prism="http://prismlibrary.com/"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PrintControler"
+        xmlns:lv="clr-namespace:PrintControler.Views"
+        xmlns:properties="clr-namespace:PrintControler.Properties"
+        mc:Ignorable="d"
+        prism:ViewModelLocator.AutoWireViewModel="True"
+        Title="{x:Static properties:Resources.Title}"
+        Height="{local:SettingBinding Height}"
+        Width="{local:SettingBinding Width}"
+        MinHeight="400"
+        MinWidth="550">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Common;component/common.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <i:Interaction.Triggers>
+        <prism:InteractionRequestTrigger SourceObject="{Binding ConnectDialog}">
+            <prism:PopupWindowAction IsModal="True" CenterOverAssociatedObject="True" />
+        </prism:InteractionRequestTrigger>
+    </i:Interaction.Triggers>
+    <Grid Background="#FFE5E5E5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" MinHeight="32"/>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Column="0" Grid.Row="0">
+            <Menu DockPanel.Dock="Top">
+                <Menu.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <DockPanel />
+                    </ItemsPanelTemplate>
+                </Menu.ItemsPanel>
+                <MenuItem Header="{x:Static properties:Resources.MenuFile}" DockPanel.Dock="Left">
+                    <MenuItem Header="{x:Static properties:Resources.File_Exit}"
+                          Command="Close"/>
+                </MenuItem>
+                <MenuItem Header="{x:Static properties:Resources.MenuHelp}" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <CheckBox IsChecked="{local:SettingBinding isDebugMode}" Content="Debug"/>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Grid Grid.Column="0" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <ComboBox HorizontalAlignment="Left" Grid.Column="0" VerticalAlignment="Center" Width="120" Margin="5,0,0,0" IsEditable="True" ItemsSource="{Binding AddressList}" Text="{Binding TargetIP}"/>
+            <Button Command="{Binding ConnectAction}" Content="{Binding ConnectLabel}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+        </Grid>
+        <Grid Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" Height="26">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="{x:Static properties:Resources.LbNozel}" VerticalAlignment="Top" Grid.Column="0" VerticalContentAlignment="Center"/>
+            <Label Content="{Binding NozelTemp}" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Column="1" VerticalContentAlignment="Center"/>
+            <Label Content="{x:Static properties:Resources.LbBed}" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+            <Label Content="{Binding BedTemp}" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Column="3" VerticalContentAlignment="Center"/>
+            <Label Content="{Binding TargetStatus}" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Column="4" VerticalContentAlignment="Center"/>
+        </Grid>
+        <TabControl 
+            prism:RegionManager.RegionName="ParameterTabRegion"
+            Height="auto" Margin="0,0,0,0" Grid.Row="2" Width="auto" Background="#FFE5E5E5">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Header" Value="{Binding Content.DataContext.HeaderText}" />
+                </Style>
+            </TabControl.ItemContainerStyle>
+            <lv:Print/>
+        </TabControl>
+     </Grid>
+</Window>
