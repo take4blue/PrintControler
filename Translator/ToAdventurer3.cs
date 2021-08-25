@@ -65,6 +65,11 @@ namespace Take4.Translator {
 		[DataMember]
 		public double PlayRemovalLength { set; get; }
 		/// <summary>
+		/// 遊び除去のためのオフセット距離
+		/// </summary>
+		[DataMember]
+		public double PlayOffsetLength { set; get; }
+		/// <summary>
 		/// グローバルオフセット量
 		/// </summary>
 		[DataMember]
@@ -96,6 +101,7 @@ namespace Take4.Translator {
 			MotorZ = 40;
 			MotorB = 20;
 			PlayRemovalLength = 0.5;
+			PlayOffsetLength = 0.0;
 			OffsetZ = 0.0;
 			BrimSpeed = 420;
 			BrimSpeedRatio = 50;
@@ -111,6 +117,7 @@ namespace Take4.Translator {
 			MotorA = source.MotorA;
 			MotorB = source.MotorB;
 			PlayRemovalLength = source.PlayRemovalLength;
+			PlayOffsetLength = source.PlayOffsetLength;
 			OffsetZ = source.OffsetZ;
 			BrimSpeedTypeValue = source.BrimSpeedTypeValue;
 			BrimSpeed = source.BrimSpeed;
@@ -145,6 +152,7 @@ namespace Take4.Translator {
 			Check(MotorY, 1, 100, ref ret, nameof(MotorY));
 			Check(MotorZ, 1, 100, ref ret, nameof(MotorZ));
 			Check(PlayRemovalLength, 0.0, 10.0, 2, ref ret, nameof(PlayRemovalLength));
+			Check(PlayOffsetLength, 0.0, 10.0, 2, ref ret, nameof(PlayOffsetLength));
 			Check(OffsetZ, -10.0, 10.0, 2, ref ret, nameof(OffsetZ));
 			Check(BrimSpeed / (isMMS ? 60 : 1), 1, 4800 / (isMMS ? 60 : 1), ref ret, nameof(BrimSpeed));
 			Check(BrimSpeedRatio, 1, 999, ref ret, nameof(BrimSpeedRatio));
@@ -398,6 +406,10 @@ namespace Take4.Translator {
 						if (coordinate_.Z > prevZ) {
 							// Z値が、前の値より上に行った場合、遊び除去を実施
 							WritePlayRemoval(fileType_ == FileType.FlashPrint ? (int)coordinate_.F : s3dParameter_.RapidZSpeed);
+							// Z値が、前の値より上に言った場合、遊びオフセットを変更をする
+							if (coordinate_.IsAbsolute && modifyParameter_.PlayOffsetLength != 0.0) {
+								line.Modify('Z', (x) => x.Value += modifyParameter_.PlayOffsetLength);
+							}
 						}
 					}
 					else if (brimSection_) {

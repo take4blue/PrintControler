@@ -145,6 +145,9 @@ After correcting the file, transfer it.</value>
   <data name="OutputParameter" xml:space="preserve">
     <value>Output Parameter</value>
   </data>
+  <data name="PlayOffset" xml:space="preserve">
+    <value>Lift Offset</value>
+  </data>
   <data name="PlayRemoval" xml:space="preserve">
     <value>Lift Size</value>
   </data>

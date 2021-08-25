@@ -254,6 +254,11 @@ namespace PrintControler.MModifyFile.ViewModels {
 			get => parameter_.PlayRemovalLength;
 		}
 
+		public double PlayOffsetLength {
+			set => SetProperty(value);
+			get => parameter_.PlayOffsetLength;
+		}
+
 		public double OffsetZ {
 			set => SetProperty(value);
 			get => parameter_.OffsetZ;
@@ -294,6 +299,7 @@ namespace PrintControler.MModifyFile.ViewModels {
 					RaisePropertyChanged(nameof(MotorZ));
 					RaisePropertyChanged(nameof(MotorA));
 					RaisePropertyChanged(nameof(PlayRemovalLength));
+					RaisePropertyChanged(nameof(PlayOffsetLength));
 					RaisePropertyChanged(nameof(OffsetZ));
 					RaisePropertyChanged(nameof(BrimSpeed));
 					RaisePropertyChanged(nameof(BrimSpeedRatio));

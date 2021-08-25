@@ -32,12 +32,21 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Label Content="{x:Static properties:Resources.PlayRemoval}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="playRemovalSize" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="5,0"
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+            <TextBox x:Name="playRemovalSize" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="5,0"
                              Style="{StaticResource AutoWidthTextBox}" MaxLength="6">
-            <TextBox.Text>
-                <Binding Path="PlayRemovalLength" StringFormat="{}{0:F2}" UpdateSourceTrigger="PropertyChanged" />
-            </TextBox.Text>
-        </TextBox>
+                <TextBox.Text>
+                    <Binding Path="PlayRemovalLength" StringFormat="{}{0:F2}" UpdateSourceTrigger="PropertyChanged" />
+                </TextBox.Text>
+            </TextBox>
+            <Label Content="{x:Static properties:Resources.PlayOffset}" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="playOffset"  HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0"
+                             Style="{StaticResource AutoWidthTextBox}" MaxLength="6">
+                <TextBox.Text>
+                    <Binding Path="PlayOffsetLength" StringFormat="{}{0:F2}" UpdateSourceTrigger="PropertyChanged" />
+                </TextBox.Text>
+            </TextBox>
+        </StackPanel>
         <Label Content="{x:Static properties:Resources.BrimCorrection}" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
             <ComboBox x:Name="SelectBrimSpeed" HorizontalAlignment="Left" VerticalAlignment="Center" Width="90" Margin="5,0" SelectedIndex="{Binding BrimSpeedTypeValue}">
