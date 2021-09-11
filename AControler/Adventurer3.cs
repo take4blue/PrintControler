@@ -12,45 +12,53 @@ namespace Take4.AControler {
 	/// </summary>
 	public class Adventurer3
     {
-		#region ARPテーブル取り出し用DLL
-		[DllImport("iphlpapi.dll")]
-		extern static int GetIpNetTable(IntPtr pTcpTable, ref int pdwSize, bool bOrder);
-
-		[StructLayout(LayoutKind.Sequential)]
-		public struct MIB_IPNETROW {
-			public int Index;
-			public int PhysAddrLen;
-			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-			public byte[] PhysAddr;
-			public int Addr;
-			public int Type;
-		}
-		#endregion
-
 		/// <summary>
 		/// Adventurer3のIPをサーチするクラス
-		/// ARPテーブルから登録済みIPを検索し、そのIPアドレスのMACアドレス先頭02で始まるものを返す
-		/// ARPテーブル検索は、GetIpNetTableを使用する
+		/// UDPのブロードキャストで検索する
 		/// </summary>
 		public static List<IPAddress> SearchIP() {
 			var ips = new List<IPAddress>();
+			byte[] sendBytes = { 0xc0, 0xa8, 0x0b, 0x03, 0x46, 0x51, 0x00, 0x00 };
 
-			int size = 0;
-			GetIpNetTable(IntPtr.Zero, ref size, true);//必要サイズの取得
-			var p = Marshal.AllocHGlobal(size);//メモリ割当て
-			if (GetIpNetTable(p, ref size, true) == 0) {//データの取得
-				var num = Marshal.ReadInt32(p);//MIB_IPNETTABLE.dwNumEntries(データ数)
-				var ptr = IntPtr.Add(p, 4);
-				for (int i = 0; i < num; i++) {
-					MIB_IPNETROW work = (MIB_IPNETROW)Marshal.PtrToStructure(ptr, typeof(MIB_IPNETROW));
-					if (work.PhysAddrLen > 0 && work.PhysAddr[0] == 0x02 && work.Type == 3) {
-						ips.Add(new IPAddress(BitConverter.GetBytes(work.Addr)));
+			// IP一覧取り出し
+			// ネットワークアダプタ一覧からIPv4のホストアドレスを検索
+			// 見つかったIPアドレスの18001ポートから225.0.0.9の19000ポートにブロードキャストを行いその返却値から機器のIPを求める。
+			var interfaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+			foreach (var adapter in interfaces) {
+				if (adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up) {
+					var properties = adapter.GetIPProperties();
+
+					foreach (var unicast in properties.UnicastAddresses) {
+						switch (unicast.Address.AddressFamily) {
+						case AddressFamily.InterNetwork:
+							if (unicast.IsDnsEligible) {
+								var ip = unicast.Address;
+								var localPort = new IPEndPoint(ip, 18001);
+								var udp = new UdpClient(localPort);
+								var targetPort = new IPEndPoint(IPAddress.Parse("225.0.0.9"), 19000);
+								udp.EnableBroadcast = true;
+								udp.Send(sendBytes, sendBytes.Length, targetPort);
+								udp.Client.ReceiveTimeout = 1000;   // ms:タイムアウトの設定
+
+								for (; ; ) {
+									try {
+										IPEndPoint e = new IPEndPoint(IPAddress.Any, 19000);
+										var receiveBytes = udp.Receive(ref e);
+										ips.Add(e.Address);
+									}
+									catch (SocketException) {
+										// タイムアウト
+										break;
+									}
+								}
+								//UdpClientを閉じる
+								udp.Close();
+							}
+							break;
+						}
 					}
-					ptr = IntPtr.Add(ptr, Marshal.SizeOf(typeof(MIB_IPNETROW)));//次のデータ
 				}
-				Marshal.FreeHGlobal(p);  //メモリ開放
 			}
-
 			return ips;
 		}
 
