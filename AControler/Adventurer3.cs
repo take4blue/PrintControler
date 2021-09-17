@@ -8,6 +8,178 @@ using System.Threading;
 
 namespace Take4.AControler {
 	/// <summary>
+	/// ファイル転送のためのインターフェースクラス
+	/// もともとAdventurer3にあったものをこちらに持ってくるので、Adventurer3内のものをアクセスできるように一部メンバはinternalにしておいてある
+	/// </summary>
+	interface ISender
+    {
+		/// <summary>
+		/// データ送信処理
+		/// </summary>
+		/// <param name="fp">送信ファイル</param>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		/// <returns>true : 送信完了</returns>
+		bool SendFileData(FileStream fp, Adventurer3 adv);
+
+		/// <summary>
+		/// 送信キャンセルの処理
+		/// 一応UIから見て非同期処理内で呼び出されるもの
+		/// </summary>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		void SendCancelAction(Adventurer3 adv);
+
+		/// <summary>
+		/// 送信情報の初期化
+		/// </summary>
+		/// <param name="client">初期化対象</param>
+		void Initialize(TcpClient client);
+	}
+
+	/// <summary>
+	/// V1.6でのファイル転送処理
+	/// </summary>
+	class V1Sender : ISender
+    {
+		const int blockSize_ = 4096;
+		const int headerSize_ = 16;
+
+		static void GetByte(int value, byte[] buffer, uint index)
+		{
+			buffer[index] = (byte)((value >> 24) & 0xff);
+			buffer[index + 1] = (byte)((value >> 16) & 0xff);
+			buffer[index + 2] = (byte)((value >> 8) & 0xff);
+			buffer[index + 3] = (byte)(value & 0xff);
+		}
+
+		/// <summary>
+		/// データ送信処理
+		/// </summary>
+		/// <param name="fp">送信ファイル</param>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		/// <returns>true : 送信完了</returns>
+		/// <remarks>
+		/// Sleep100を入れた理由は、機器側からのブロック送信が完了した通信が再送されたため、送受信データの段ずれが起こった。
+		/// プロトコルアナライザの結果を見る限り、以下のような送受信だった。
+		/// ・PCから0ブロック目送信
+		/// ・機器から0ブロックOK受信
+		/// ・PCから1ブロック目送信
+		/// ・機器から0ブロックOK受信　← これがおかしい
+		/// ・PCから2ブロック目送信
+		/// PC側からのSEQ/ACKの番号は問題ないようだったのだが、何らかの理由で、PCからの1ブロック目送信のSEQ/ACKが認識できなかったのかも。
+		/// ただ、送信されたファイルで正しく出力はされたみたいだった。
+		/// ここで、sleepを入れたところ、とりあえず、送受信の段ずれは解消されたが、機器からの0ブロック目OK受信の前に、なにやら機器側から意味不明な送信が来ている。これは未解消。
+		/// </remarks>
+		public bool SendFileData(FileStream fp, Adventurer3 adv)
+        {
+			int counter = 0;
+			adv.isStop_ = false;
+			adv.RemainTransferByte = fp.Length;
+			adv.TransferByte = adv.RemainTransferByte;
+			var crc32 = new Crc32b();   // 検査用ハッシュ関数
+			for (long i = 0; i < fp.Length && !adv.isStop_; i += blockSize_, adv.RemainTransferByte -= blockSize_, counter++) {
+				var readBuffer = new byte[blockSize_];
+				var readByte = fp.Read(readBuffer, 0, blockSize_);
+				if (readByte <= 0) {
+					// 読み取りデータがないので、中止
+					return false;
+				}
+				Array.Resize(ref readBuffer, readByte);
+				var writeBuffer = new byte[headerSize_ + blockSize_];
+				writeBuffer[0] = writeBuffer[1] = 0x5a;
+				writeBuffer[2] = writeBuffer[3] = 0xa5;
+				GetByte(counter, writeBuffer, 4);
+				GetByte(readByte, writeBuffer, 8);
+				Array.Copy(crc32.ComputeHash(readBuffer), 0, writeBuffer, 12, 4);
+				Array.Copy(readBuffer, 0, writeBuffer, 16, readBuffer.Length);
+				var ret = adv.Send(writeBuffer);
+				if (!adv.IsOK(ret)) {
+					// データの送信ができなかったので中止
+					return false;
+				}
+				if (i == 0) {
+					// 初めだけ
+					Thread.Sleep(100);
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// 送信キャンセルの処理
+		/// 一応UIから見て非同期処理内で呼び出されるもの
+		/// </summary>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		public void SendCancelAction(Adventurer3 adv)
+        {
+
+        }
+
+		/// <summary>
+		/// 送信情報の初期化
+		/// </summary>
+		/// <param name="client">初期化対象</param>
+		public void Initialize(TcpClient client)
+        {
+			client.SendBufferSize = blockSize_ + headerSize_;
+		}
+	}
+
+	/// <summary>
+	/// V2.1形式のデータ転送方法
+	/// </summary>
+	class V2Sender : ISender
+    {
+		const int blockSize_ = 4096;
+
+		/// <summary>
+		/// データ送信処理
+		/// </summary>
+		/// <param name="fp">送信ファイル</param>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		/// <returns>true : 送信完了</returns>
+		public bool SendFileData(FileStream fp, Adventurer3 adv)
+		{
+			int counter = 0;
+			adv.isStop_ = false;
+			adv.RemainTransferByte = fp.Length;
+			adv.TransferByte = adv.RemainTransferByte;
+			for (long i = 0; i < fp.Length && !adv.isStop_; i += blockSize_, adv.RemainTransferByte -= blockSize_, counter++) {
+				var readBuffer = new byte[blockSize_];
+				var readByte = fp.Read(readBuffer, 0, blockSize_);
+				if (readByte <= 0) {
+					// 読み取りデータがないので、中止
+					return false;
+				}
+				if (!adv.SendOnly(readBuffer, readByte)) {
+					return false;
+				}
+			}
+			Thread.Sleep(100);
+			return true;
+		}
+
+		/// <summary>
+		/// 送信キャンセルの処理
+		/// 一応UIから見て非同期処理内で呼び出されるもの
+		/// </summary>
+		/// <param name="adv">Adventurer3制御オブジェクト</param>
+		public void SendCancelAction(Adventurer3 adv)
+		{
+			// 転送ダイアログがタイムアウトで閉じるまで待つ
+			Thread.Sleep(15000);
+		}
+
+		/// <summary>
+		/// 送信情報の初期化
+		/// </summary>
+		/// <param name="client">初期化対象</param>
+		public void Initialize(TcpClient client)
+		{
+			client.SendBufferSize = blockSize_;
+		}
+	}
+
+	/// <summary>
 	/// Adventurer3との通信用制御クラス
 	/// </summary>
 	public class Adventurer3
@@ -68,6 +240,12 @@ namespace Take4.AControler {
 		const int Adventurer3Port = 8899;
 		string ip_;
 		System.Net.Sockets.TcpClient tcp_;
+
+		/// <summary>
+		/// データ転送のための送信オブジェクト
+		/// 初期値はV1形式
+		/// </summary>
+		private ISender sender_ = new V1Sender();
 
 		/// <summary>
 		/// コンストラクタ
@@ -144,7 +322,22 @@ namespace Take4.AControler {
 				byte[] sendBytes = enc.GetBytes("~M601 S1\r\n");
 				//データを送信する
 				ns.Write(sendBytes, 0, sendBytes.Length);
-				Receive(ns);
+				var ret = Receive(ns);
+				if (ret.IndexOf("failed") == -1) {
+					// 受信文字列を解析してファイル送信方法を決定する
+					if (ret.IndexOf("V2.1") == -1) {
+						sender_ = new V1Sender();
+					}
+					else {
+						sender_ = new V2Sender();
+					}
+					sender_.Initialize(tcp_);
+				}
+				else {
+					// M601でfailedが返ってきた場合END処理を行っておく
+					End();
+					return false;
+                }
 			}
 			return true;
 		}
@@ -198,6 +391,44 @@ namespace Take4.AControler {
 			}
 			else {
 				return null;
+			}
+		}
+
+		/// <summary>
+		/// コマンド送信のみ
+		/// </summary>
+		/// <param name="cmd">コマンド文字列</param>
+		/// <param name="preOut">コマンドの前に~をつけるかつけないか</param>
+		/// <returns>false : 送信失敗</returns>
+		public bool SendOnly(string cmd, bool preOut = true)
+		{
+			System.Text.Encoding enc = System.Text.Encoding.UTF8;
+			byte[] sendBytes = enc.GetBytes(string.Format("{1}{0}\r\n", cmd, preOut ? "~" : ""));
+			return SendOnly(sendBytes, sendBytes.Length);
+		}
+
+		/// <summary>
+		/// データ送信のみ
+		/// </summary>
+		/// <param name="data">送信データ</param>
+		/// <returns>false : 送信失敗</returns>
+		public bool SendOnly(byte[] data, int Length)
+        {
+			if (tcp_ != null) {
+				var ns = tcp_.GetStream();
+				//データを送信する
+				try {
+					ns.Write(data, 0, Length);
+					return true;
+				}
+				catch (IOException) {
+					// IO例外があった場合、とりあえずtcpを閉じてしまう。
+					tcp_ = null;
+					return false;
+				}
+			}
+			else {
+				return false;
 			}
 		}
 
@@ -398,27 +629,19 @@ namespace Take4.AControler {
 			}
 		}
 
-		static void GetByte(int value, byte[] buffer, uint index) {
-			buffer[index] = (byte)((value >> 24) & 0xff);
-			buffer[index + 1] = (byte)((value >> 16) & 0xff);
-			buffer[index + 2] = (byte)((value >> 8) & 0xff);
-			buffer[index + 3] = (byte)(value & 0xff);
-		}
-
-		private bool isStop_ = false;
+		internal bool isStop_ = false;
 		/// <summary>
 		/// 残りの転送データ量
 		/// </summary>
-		public long RemainTransferByte { get; private set; }
-		public long TransferByte { get; private set; }
+		public long RemainTransferByte { get; internal set; }
+		public long TransferByte { get; internal set; }
 		/// <summary>
 		/// 転送のストップ
 		/// </summary>
 		public void StopTransfer() {
 			isStop_ = true;
 		}
-		const int blockSize_ = 4096;
-		const int headerSize_ = 16;
+
 		/// <summary>
 		/// JOB開始
 		/// </summary>
@@ -428,18 +651,6 @@ namespace Take4.AControler {
 		/// これを一応JOB名としておく
 		/// 基本的には元のファイル名が望ましい
 		/// </param>
-		/// <remarks>
-		/// Sleep100を入れた理由は、機器側からのブロック送信が完了した通信が再送されたため、送受信データの段ずれが起こった。
-		/// プロトコルアナライザの結果を見る限り、以下のような送受信だった。
-		/// ・PCから0ブロック目送信
-		/// ・機器から0ブロックOK受信
-		/// ・PCから1ブロック目送信
-		/// ・機器から0ブロックOK受信　← これがおかしい
-		/// ・PCから2ブロック目送信
-		/// PC側からのSEQ/ACKの番号は問題ないようだったのだが、何らかの理由で、PCからの1ブロック目送信のSEQ/ACKが認識できなかったのかも。
-		/// ただ、送信されたファイルで正しく出力はされたみたいだった。
-		/// ここで、sleepを入れたところ、とりあえず、送受信の段ずれは解消されたが、機器からの0ブロック目OK受信の前に、なにやら機器側から意味不明な送信が来ている。これは未解消。
-		/// </remarks>
 		public bool StartJob(string filename, string jobName = null) {
 			if (jobName == null) {
 				// job名が設定されていない場合は、filenameから引用する
@@ -450,36 +661,9 @@ namespace Take4.AControler {
 				Status = machineStatus.Transfer;
 				using (var fp = new FileStream(filename, FileMode.Open, FileAccess.Read)) {
 					if (IsOK(Send("M28 " + fp.Length.ToString() + " 0:/user/" + jobName))) {
-						int counter = 0;
-						isStop_ = false;
-						RemainTransferByte = fp.Length;
-						TransferByte = RemainTransferByte;
-						var crc32 = new Crc32b();   // 検査用ハッシュ関数
-						for (long i = 0; i < fp.Length && !isStop_; i += blockSize_, RemainTransferByte -= blockSize_, counter++) {
-							var readBuffer = new byte[blockSize_];
-							var readByte = fp.Read(readBuffer, 0, blockSize_);
-							if (readByte <= 0) {
-								// 読み取りデータがないので、中止
-								return false;
-							}
-							Array.Resize(ref readBuffer, readByte);
-							var writeBuffer = new byte[headerSize_ + blockSize_];
-							writeBuffer[0] = writeBuffer[1] = 0x5a;
-							writeBuffer[2] = writeBuffer[3] = 0xa5;
-							GetByte(counter, writeBuffer, 4);
-							GetByte(readByte, writeBuffer, 8);
-							Array.Copy(crc32.ComputeHash(readBuffer), 0, writeBuffer, 12, 4);
-							Array.Copy(readBuffer, 0, writeBuffer, 16, readBuffer.Length);
-							var ret = Send(writeBuffer);
-							if (!IsOK(ret)) {
-								// データの送信ができなかったので中止
-								return false;
-							}
-							if (i == 0) {
-								// 初めだけ
-								Thread.Sleep(100);
-							}
-						}
+						if (!sender_.SendFileData(fp, this)) {
+							return false;
+                        }
 					}
 					else {
 						return false;
@@ -494,13 +678,14 @@ namespace Take4.AControler {
 					}
 				}
 				else {
-					Send("M29");    // とりあえずM29を送っておく
+					SendOnly("M29");    // とりあえずM29を送っておく
 					// FlashPrintを見る限り、ここで、いったん接続が切れる。
-					if (tcp_ != null) {
-						tcp_.Close();
-						tcp_ = null;
-					}
-					Start();
+					// V1の場合、コンソール画面でダイアログが出ているのでその対応が必要
+					// そのため一度End()を呼ぶのが良いことにななる
+					// V2の場合送信失敗のタイムアウトになるまでダイアログが出続け、機器から応答データ受付ができなくなる。
+					// そのためタイムアウトが終わるまで待つのが正解になる
+					// こちらが勝手にEndをすると、相手からリターンが来ないので例外が出る、またEndをしないと接続していると解釈され次の処理が面倒になる
+					sender_.SendCancelAction(this);
 				}
 				return false;
 			}

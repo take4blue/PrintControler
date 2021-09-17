@@ -231,6 +231,10 @@ namespace PrintControler {
 					return adventurer_.StartJob(sendfile, targetName);
 				});
 				mut_.ReleaseMutex();
+				if (!result) {
+					RiseProperty(Adventurer3Property.status);
+					RiseProperty(Adventurer3Property.connect);
+				}
 				return result;
 			}
 			return false;
