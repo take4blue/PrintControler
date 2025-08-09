@@ -24,7 +24,7 @@ namespace Take4.Rs274ngcParser {
 		/// <param name="key">取り出すデータのキー文字</param>
 		/// <param name="value">設定されていた値</param>
 		/// <param name="position">設定されていた位置(0オリジン)</param>
-		/// <returns>キーに対する情報が設定されていたかどうか、truの場合設定されていた</returns>
+		/// <returns>キーに対する情報が設定されていたかどうか、trueの場合設定されていた</returns>
 		public bool TryGetValue(Char key, out Double value, out int position) {
 			ValuePosition result;
 			var serachKey = new ValuePosition(key);
@@ -111,6 +111,27 @@ namespace Take4.Rs274ngcParser {
 		public bool Add(Char key, Double value, int fp = 0) {
 			var valuePair = new ValuePosition(key) { Value = value, Position = keyValues_.Count, FP = fp };
 			return keyValues_.Add(valuePair);
+		}
+
+		/// <summary>
+		/// 指定キーの情報を削除する
+		/// </summary>
+		/// <param name="key">削除するキー文字</param>
+		/// <returns></returns>
+		public bool Remove(Char key)
+		{
+			ValuePosition result;
+			var searchKey = new ValuePosition(key);
+			if (keyValues_.TryGetValue(searchKey, out result)) {
+				var ret = keyValues_.Remove(searchKey);
+				foreach (var val in keyValues_) {
+					if (val.Position > searchKey.Position) {
+						val.Position--;
+					}
+				}
+				return ret;
+			}
+			return false;
 		}
 
 		/// <summary>

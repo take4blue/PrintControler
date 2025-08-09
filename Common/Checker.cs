@@ -50,6 +50,7 @@ namespace Take4.Common {
 				switch (Path.GetExtension(files[0])) {
 				case ".g":
 				case ".gx":
+				case ".gcode":
 					return files[0];
 				}
 			}

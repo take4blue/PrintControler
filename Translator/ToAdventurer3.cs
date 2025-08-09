@@ -214,6 +214,7 @@ namespace Take4.Translator {
 			FlashPrint,
 			Simplify3D,
 			Slic3r,
+			OrcaSlicer,
 			Other,
 		}
 		/// <summary>
@@ -318,6 +319,10 @@ namespace Take4.Translator {
 				fileType_ = FileType.Slic3r;
 				return true;
 			}
+			else if (firstLine.StartsWith("; HEADER_BLOCK_START")) {
+				fileType_ = FileType.OrcaSlicer;
+				return true;
+			}
 			return false;
 		}
 
@@ -379,9 +384,9 @@ namespace Take4.Translator {
 			Double prevZ = coordinate_.Z;
 
 			if (coordinate_.ActionLine(line)) {
-				Double gcode;
+				Double code;
 				int position;
-				if (line.TryGetValue('G', out gcode, out position) && gcode == 1) {
+				if (line.TryGetValue('G', out code, out position) && code == 1) {
 					// 以下G1コードのみ実行する
 					var hasE = line.Has('E');
 					var hasX = line.Has('X');
@@ -393,8 +398,8 @@ namespace Take4.Translator {
 						doMoveExtrudeOutput_ = true;
 					}
 
-					if (!doMoveExtrudeOutput_ && hasE && !hasX && !hasY && !hasZ) {
-						// 造形のための射出をする前のEの変更動作は出力しないようにする
+					if (fileType_ != FileType.OrcaSlicer && !doMoveExtrudeOutput_ && hasE && !hasX && !hasY && !hasZ) {
+						// OrcaSlicer以外造形のための射出をする前のEの変更動作は出力しないようにする
 						return true;
 					}
 					else if (hasZ) {
@@ -403,8 +408,8 @@ namespace Take4.Translator {
 							// グローバルオフセットでZ値を更新
 							line.Modify('Z', (x) => x.Value += modifyParameter_.OffsetZ);
 						}
-						if (coordinate_.Z > prevZ) {
-							// Z値が、前の値より上に行った場合、遊び除去を実施
+						if (fileType_ != FileType.OrcaSlicer && coordinate_.Z > prevZ) {
+							// OrcaSlicer以外でZ値が、前の値より上に行った場合、遊び除去を実施
 							WritePlayRemoval(fileType_ == FileType.FlashPrint ? (int)coordinate_.F : s3dParameter_.RapidZSpeed);
 							// Z値が、前の値より上に言った場合、遊びオフセットを変更をする
 							if (coordinate_.IsAbsolute && modifyParameter_.PlayOffsetLength != 0.0) {
@@ -424,6 +429,19 @@ namespace Take4.Translator {
 									coordinate_.F * (double)modifyParameter_.BrimSpeedRatio / 100.0;
 								line.Modify('F', (x) => x.Value = after);
 							}
+						}
+					}
+				}
+				else if (line.TryGetValue('M', out code, out position) && code == 106 && line.Has('S') && fileType_ == FileType.OrcaSlicer) {
+					if (line.Has('P')) {
+						// M106 P2 は行出力しない。
+						return true;
+					}
+					else if (line.TryGetValue('S', out code, out position)) {
+						line.Remove('S');	// Sパラメータは除去
+						if (code == 0) {
+							// M106 S0の場合はM107に変更
+							line.Modify('M', (x) => x.Value = 107);
 						}
 					}
 				}
